@@ -1,4 +1,4 @@
-function [ Blocks ] = make_blocks( EEG_NS, EEG_ST ,num_levels )
+function [ Blocks, start_task_ns, start_task_st ] = make_blocks( EEG_NS, EEG_ST ,num_levels )
 %EEG_NS : if file is loaded otherwise: EEG_NS == 0
 %EEG_ST : if file is loaded otherwise: EEG_ST == 0
 %num_levels number of levels: 6 (original), 3
@@ -18,6 +18,10 @@ BLOCKS = 26;
  
 Blocks{1,1} = zeros(BLOCKS, 3); %NoStress
 Blocks{2,1} = zeros(BLOCKS, 3); %Stress
+first_ns = 1; %Flag we didn't see the first eval command
+first_st = 1;
+start_task_ns = -1;
+start_task_st = -1;
 
 for j = 1:2 %Extruct from stress and no stress conditions
 
@@ -36,7 +40,15 @@ for j = 1:2 %Extruct from stress and no stress conditions
     
     %Loop for making a matrix of the blocks and parse all block's info (nLevel, ringSize etc.)
     for t = EEG.EEG.event(1,:)
-        if strcmp(t.type,'runStart') %Start of Block  
+        if strcmp(t.type,'eval')  %Start of the task
+            if (j == 1) && (first_ns == 1)
+                start_task_ns = t.latency; %Start time of the task noStress
+                first_ns = 0;
+            elseif (j == 2) && (first_st == 1)
+                start_task_st = t.latency; %Start time of the task stress
+                first_st = 0;
+            end
+        elseif strcmp(t.type,'runStart') %Start of Block  
             Blocks{j,2}(index,1) =  parser_runStart(t.code);  %Array of all blocks objects
             Blocks{j}(index,1) = t.latency; %Start time of the block
             Blocks{j}(index, 3) = level(Blocks{j,2}(index,1).nLevel, Blocks{j,2}(index,1).ringSize, num_levels); %Calculate the block's level 

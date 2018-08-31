@@ -1,8 +1,5 @@
-%function [ dataset ] = make_dataset( subjects, seg_len, over_lap )
+function [ dataset ] = make_dataset( subjects, seg_len, over_lap )
 %Takes subjects array and makes a dataest table
-
-seg_len = 2200;
-over_lap = 0.3;
 
 ind = 1;
 max_hrv = 0;
@@ -56,21 +53,33 @@ for sub = 1:length(subjects)
                     
                     %GSR
                     seg_gsr =  signal_g(index:index+seg_len-1);
-                    gsr_signal{ind,1} = seg_gsr;
+                    %gsr_signal{ind,1} = seg_gsr;
                     gsr_mean(ind,1) = mean(seg_gsr);
                     gsr_std(ind,1) = std(seg_gsr);
+                    [outNo,outMeanAmplitude,outMeanTime,outstdAmplitude,outstdTime,outminamplitude,outminTime,outmaxamplitude,outmaxTime,outmedianamplitude,outmedianTime] = feature_gsr(signal_g);
+                    gsr_outNo(ind,1) = outNo;
+                    gsr_outMeanAmplitude(ind,1) =outMeanAmplitude;
+                    gsr_outMeanTime(ind,1) = outMeanTime;
+                    gsr_outstdAmplitude(ind,1)= outstdAmplitude;
+                    gsr_outstdTime(ind,1) = outstdTime;
+                    gsr_outminamplitude(ind,1) = outminamplitude;
+                    gsr_outminTime(ind,1)=outminTime;
+                    gsr_outmaxamplitude(ind,1)=outmaxamplitude;
+                    gsr_outmaxTime(ind,1)=outmaxTime;
+                    gsr_outmedianamplitude(ind,1)= outmedianamplitude;
+                    gsr_outmedianTime(ind,1)= outmedianTime;
                     %Jump to next segment's starting index
                     index = index + seg_len - back;
                     ind = ind + 1;
                 end
-            else
+          else
                 sub_num(ind,1) = sub_number; %Subject's number
                 conditions(ind,1) = condition; %Stress/ NoStress
                 level(ind,1) = subjects(1,sub).blocks{cond,1}(b,3); %Block's level 
                 ecg_signal{ind,1} = signal_e;
                 %Adding features of ECG signal:
-                ecg_mean(ind,1) = mean(signal);
-                ecg_std(ind,1) = std(signal);
+                ecg_mean(ind,1) = mean(signal_e);
+                ecg_std(ind,1) = std(signal_e);
     %           ecg_peaks{ind,1} = findpeaks(signal);
                 [avgHR,meanRR,rmssd,nn50,pNN50,sd_RR,sd_HR,se,pse,average_hrv,hrv]= ECG_features(signal_e);
                 ecg_avgHR(ind,1) = avgHR;
@@ -90,8 +99,20 @@ for sub = 1:length(subjects)
                 %GSR
                 gsr_signal{ind,1} = signal_g;
                 %Adding features of GSR signal:
-                gsr_mean(ind,1) = mean(signal);
-                gsr_std(ind,1) = std(signal);
+                gsr_mean(ind,1) = mean(signal_g);
+                gsr_std(ind,1) = std(signal_g);
+                [outNo,outMeanAmplitude,outMeanTime,outstdAmplitude,outstdTime,outminamplitude,outminTime,outmaxamplitude,outmaxTime,outmedianamplitude,outmedianTime] = feature_gsr(signal_g);
+                gsr_outNo(ind,1) = outNo;
+                gsr_outMeanAmplitude(ind,1) =outMeanAmplitude;
+                gsr_outMeanTime(ind,1) = outMeanTime;
+                gsr_outstdAmplitude(ind,1)= outstdAmplitude;
+                gsr_outstdTime(ind,1) = outstdTime;
+                gsr_outminamplitude(ind,1) = outminamplitude;
+                gsr_outminTime(ind,1)=outminTime;
+                gsr_outmaxamplitude(ind,1)=outmaxamplitude;
+                gsr_outmaxTime(ind,1)=outmaxTime;
+                gsr_outmedianamplitude(ind,1)= outmedianamplitude;
+                gsr_outmedianTime(ind,1)= outmedianTime;
                 ind = ind + 1;
 
         end
@@ -101,8 +122,9 @@ end
 %Add zeros to fix length
 % for i = 1:ind-1
 %     ecg_hrv{i,1}(1,end+1:max_hev) = 0;
-% end
+ 
 %%If want to add feature: need to add in the args after: ecg_signal and gsr_signal
-dataset = table(sub_num, conditions, ecg_signal, ecg_avgHR ,ecg_meanRR ,ecg_rmssd ,ecg_nn50, ecg_pNN50,ecg_sd_RR, ecg_sd_HR,ecg_se,ecg_pse,ecg_average_hrv, ecg_hrv, gsr_signal, gsr_mean, gsr_std, level);
+%dataset = table(sub_num, conditions, ecg_signal, ecg_avgHR ,ecg_meanRR ,ecg_rmssd ,ecg_nn50, ecg_pNN50,ecg_sd_RR, ecg_sd_HR,ecg_se,ecg_pse,ecg_average_hrv, ecg_hrv, gsr_signal, gsr_mean, gsr_std, level);
 
-
+dataset = table(sub_num, conditions,  ecg_avgHR ,ecg_meanRR ,ecg_rmssd ,ecg_nn50, ecg_pNN50,ecg_sd_RR, ecg_sd_HR,ecg_se,ecg_pse,ecg_average_hrv,  gsr_mean, gsr_std,gsr_outNo,gsr_outMeanAmplitude, gsr_outMeanTime,gsr_outstdAmplitude,gsr_outstdTime,gsr_outminamplitude,gsr_outminTime,gsr_outmaxamplitude,gsr_outmaxTime,gsr_outmedianamplitude,gsr_outmedianTime, level);%no raw signal
+end

@@ -32,13 +32,18 @@ from sklearn.naive_bayes import GaussianNB
 #from sklearn.gaussian_process import GaussianProcessClassifier
 
 
+# # load the model from disk
+# loaded_model = pickle.load(open(filename, 'rb'))
+# result = loaded_model.score(X_test, Y_test)
+# print(result)
+
 #1. The dataset
 filename_glass = r'C:\Users\User\Documents\2017-2018\Project\MatlabScripts\load_data\data.csv'
 df_data = pd.read_csv(filename_glass)
 
 #Take only levels in: levels
 levels = [1,2,3,4,5]
-between_shuffle = 0
+between_shuffle = 1
 df_data = df_data.loc[df_data['level'].isin(levels)]
 
 print("This dataset has nrows, ncols: {}".format(df_data.shape))
@@ -121,6 +126,12 @@ def batch_classify(X_train, Y_train, X_test, Y_test, no_classifiers=5, verbose=T
         train_score = classifier.score(X_train, Y_train)
         test_score = classifier.score(X_test, Y_test)
 
+        # save the model to disk
+        filename = ''.join(['finalized ', classifier_name, '.sav'])
+        # filename = 'finalized%s.sav', classifier_name
+        pickle.dump(classifier, open(filename, 'wb'))
+
+
         dict_models[classifier_name] = {'model': classifier, 'train_score': train_score, 'test_score': test_score,
                                         'train_time': t_diff}
         if verbose:
@@ -161,6 +172,18 @@ dict_models = batch_classify(X_train, Y_train, X_test, Y_test, no_classifiers = 
 #Display results
 display_dict_models(dict_models)
 
+
+T = X_train[0,:]
+print('T',X_train[0,:])
+
+filename = 'finalized Gradient Boosting Classifier.sav'
+loaded_model = pickle.load(open(filename, 'rb'))
+# predict the result of the segment
+x = X_train[1,:]
+x = x.reshape(1, -1)
+result = loaded_model.predict(x)
+print('result is ', result)
+
 ###################################################################################
 
 def display_corr_with_col(df, col):
@@ -190,17 +213,17 @@ GDB_params = {
 
 df_train, df_test, X_train, Y_train, X_test, Y_test = get_train_test(df_data, y_cols, x_cols, 0.6)
 
-for n_est in GDB_params['n_estimators']:
-    for lr in GDB_params['learning_rate']:
-        for crit in GDB_params['criterion']:
-            clf = GradientBoostingClassifier(n_estimators=n_est,
-                                             learning_rate = lr,
-                                             criterion = crit)
-
-            clf.fit(X_train, Y_train)
-            train_score = clf.score(X_train, Y_train)
-            test_score = clf.score(X_test, Y_test)
-            print("For ({}, {}, {}) - train, test score: \t {:.5f} \t-\t {:.5f}".format(n_est, lr, crit[:4], train_score, test_score))
+# for n_est in GDB_params['n_estimators']:
+#     for lr in GDB_params['learning_rate']:
+#         for crit in GDB_params['criterion']:
+#             clf = GradientBoostingClassifier(n_estimators=n_est,
+#                                              learning_rate = lr,
+#                                              criterion = crit)
+#
+#             clf.fit(X_train, Y_train)
+#             train_score = clf.score(X_train, Y_train)
+#             test_score = clf.score(X_test, Y_test)
+#             print("For ({}, {}, {}) - train, test score: \t {:.5f} \t-\t {:.5f}".format(n_est, lr, crit[:4], train_score, test_score))
 
 #3. Understanding complex datasets
 #3.1 Correlation Matrix

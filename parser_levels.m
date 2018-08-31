@@ -13,7 +13,7 @@ function [ data, labels, counter, StNoSt_data, StNoSt_labels, counter_st ] = par
         
          
         BLOCKS = 26;
-        
+       
         
         data = cell(num_levels,1);
         labels = cell(num_levels,1);
@@ -40,6 +40,7 @@ function [ data, labels, counter, StNoSt_data, StNoSt_labels, counter_st ] = par
                         new_seg(1,:) =  subject.channels{1,1}{cond,1}(ind:ind+seg_len-1);
                         %GSR
                         new_seg(2,:) =  subject.channels{2,1}{cond,1}(ind:ind+seg_len-1);
+                        
                         %Label : vector represents the level
                         new_label = zeros(1,num_levels);
                         new_label(1,level+1) = 1; 

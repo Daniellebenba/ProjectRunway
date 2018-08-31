@@ -187,8 +187,9 @@ for i = 1:SUBJECTS
     %%Parse all the blocks' times and parameters:
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %(More details explained in make_blocks() function)
-    blocks = make_blocks(ecg_ns, ecg_st, num_levels); 
-
+    [blocks, start_task_ns, start_task_st] = make_blocks(ecg_ns, ecg_st, num_levels); 
+    A(i) = start_task_ns; %For check
+    B(i) = start_task_st; %For check
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%Load GSR files: stress + noStress:
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -234,7 +235,8 @@ for i = 1:SUBJECTS
     if filesLoaded(1,i) == 1 %Loaded subject i files: NoStress
         gsr_ns_data = gsr_ns.data; 
         gsr_ns_down = downsample(gsr_ns_data,4);
-        start_t = blocks{1,1}(1,1);
+        %start_t = blocks{1,1}(1,1);
+        start_t = start_task_ns;
         gsr_ns_down = [zeros(1,start_t-1), gsr_ns_down];
     else
         gsr_ns_down = '0';
@@ -243,7 +245,8 @@ for i = 1:SUBJECTS
     if filesLoaded(2,i) == 1 %Loaded subject i files: Stress
         gsr_st_data = gsr_st.data;
         gsr_st_down = downsample(gsr_st_data,4);      
-        start_t = blocks{2,1}(1,1);
+        %start_t = blocks{2,1}(1,1);
+        start_t = start_task_st;
         gsr_st_down = [zeros(1,start_t-1), gsr_st_down];
     else
         gsr_st_down = '0';
@@ -381,15 +384,19 @@ end
 %[train_input_st, train_labels_st, test_input_st, test_labels_st] = classify(train_input_st, train_labels_st, test_input_st, test_labels_st, 1);
 
 %%Make dataset with features
-[dataset] = make_dataset(subjects);
+[dataset] = make_dataset(subjects, seg_len, over_lap);
+
 %Encode Stress/NoStress 
 T = strcmp(dataset.conditions, 'stress');
 dataset.conditions = T;
+
 dataset_n = dataset;
+
 %Change the order of dataset
 %dataset_n = [dataset(:,1:2),dataset(:,5:14),dataset(:,17:18),dataset(:,3)];
+%dataset_n = [dataset_n(:,1:2),dataset_n(:,4:13),dataset_n(:,16:18)];
 %Save to .csv file for learning
-writetable(dataset_n,'data.csv') ;
+writetable(dataset,'data_in_blocks.csv') ;
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
