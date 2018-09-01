@@ -1,4 +1,4 @@
-
+import pandas as pd
 import sys, os
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtWidgets import QApplication, QDialog, QFileDialog
@@ -114,17 +114,9 @@ def RTupdate():
 def RTStream():
     global RTStreamECG, RTStreamGSR, RTStreamEVENTS, RTStreamTIME, DataStream, TimeStream, end_data, pointer
 
-    #Check
-    #print('RTStream: i=',pointer)
-    #print('RTStream: DataStream_shape', DataStream.shape)
-    #print('RTStream: Adding now to DataStream: RTStreamECG[i], RTStreamGSR[i], RTStreamEVENTS[i]', RTStreamECG[pointer], RTStreamGSR[pointer], RTStreamEVENTS[pointer])
-    #
     #Streaming new data
     np.put(DataStream, [0,1,2], [RTStreamECG[pointer], RTStreamGSR[pointer], RTStreamEVENTS[pointer]])
     np.put(TimeStream, 0, RTStreamTIME[pointer])
-    #print('RTStream: RTStreamTIME now :', RTStreamTIME[pointer])
-    # Check
-   # print('DataStream.shape now after adding is:', DataStream.shape)
 
     #Finish reading all data
     if RTStreamEVENTS[pointer] == end_data:
@@ -162,28 +154,42 @@ def extractSeg(signal, flag):
 #Predict Cl of segment and return result.
 #The function excecute two threads for calculate features of gsr and ecg parallel
 def predictSeg(inputs):
+    #Check:'''''''''''''
+    filename_glass = r'C:\Users\User\Documents\2017-2018\Project\MatlabScripts\load_data\data.csv'
+    df_data = pd.read_csv(filename_glass)
 
-    # start extracting features from ECG on new thread
-    t0 = threading.Timer(0, extractSeg, (inputs[0], 0), )
-    t0.start()
+    # Take only levels in: levels
+    levels = [1, 2, 3, 4, 5]
+    df_data = df_data.loc[df_data['level'].isin([1,2,3,4,5])]
+    y_cols = 'level'
+    x_cols = list(df_data.columns.values)
+    x_cols.remove(y_cols)
+    features = df_data.iloc[0]
+    #"""""""""""""""""""""""""""""""""""""""""""""""
 
-    # start extracting features from GSR on new thread
-    t1 = threading.Timer(0, extractSeg, (inputs[1], 1), )
-    t1.start()
 
-    # Wait for extracting all features: ECG and GSR
-    t0.join()
-    t1.join()
-
-    #Concat the features
-    features = [ecg_features + gsr_features]
-
-    #Clear the features
-    ecg_features.clear()
-    gsr_features.clear()
+    # # start extracting features from ECG on new thread
+    # t0 = threading.Timer(0, extractSeg, (inputs[0], 0), )
+    # t0.start()
+    #
+    # # start extracting features from GSR on new thread
+    # t1 = threading.Timer(0, extractSeg, (inputs[1], 1), )
+    # t1.start()
+    #
+    # # Wait for extracting all features: ECG and GSR
+    # t0.join()
+    # t1.join()
+    #
+    # #Concat the features
+    # features = [ecg_features + gsr_features]
+    #
+    # #Clear the features
+    # ecg_features.clear()
+    # gsr_features.clear()
 
     # predict the result of the segment
-    #features = features.reshape(1, -1)  #Maybe need
+    features = np.asarray(features)
+    features = features.reshape(1, -1)  #Maybe need
     result = loaded_model.predict(features)
     print('predictSeg : result is:',result) #For check
 
@@ -213,9 +219,10 @@ def RTupdateSignals():
         segment = [RTdata[0][index-counter_seg+1:index+1],RTdata[1][index-counter_seg+1:index+1]]
         print('segment', type(segment))
 
-        # @Real code
-        #result = predictSeg(segment)
-        #blockPredictions.extend(result) #Add predict to list of segmentations' predicts in the block
+        #@Real code
+        result = predictSeg(segment)
+        blockPredictions.extend(result) #Add predict to list of segmentations' predicts in the block
+        print('result for seg:',result)
 
         counter_seg = 0 #Reset counter
         block_num += 1 #count another block
@@ -225,8 +232,10 @@ def RTupdateSignals():
     # Finish reading block data.
     # Predict the block:
     if DataStream[2] == end_block:
-        # OR: add label specify it's end of block
+        # OR: add label specify it's end of the block
         print('Finish reading block data. Need to predict the block')
+        block_predict = int(np.median(blockPredictions))
+        print('Predict of the block',block_num,'is:',block_predict)
 
 
         #@Real code
@@ -238,8 +247,8 @@ def RTupdateSignals():
         # counter_seg = 0
 
         #Or:
-        #Do something with predict: graph
-        #Display what we predixt for the block
+        #Do something with predict: on the graph show
+        #Display what we predict for the block
 
     elif DataStream[2] == start_block: #Starting reading new block's data
         print('Starting reading new blocks data')
